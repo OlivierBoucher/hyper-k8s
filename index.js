@@ -6,32 +6,18 @@ exports.onApp = (app) => {
     console.log(app)
 };
 
-exports.decorateTerm = (Term, { React, notify }) => {
+exports.decorateTerm = (Hyper, {React, notify}) => {
     return class extends React.Component {
         constructor(props, context) {
-            super(props, context);
-
-            this._onTerminal = this._onTerminal.bind(this);
-        }
-
-        _onTerminal (term) {
-            if (this.props.onTerminal) this.props.onTerminal(term);
-
-            const div = document.createElement('div');
-            div.style.position = 'absolute';
-            div.style.bottom = 0;
-            div.style.height = '50px';
-            div.style.width = '100%';
-            div.style.backgroundColor = 'red';
-
-            document.body.appendChild(div);
-
-            term.div_.parentElement.style.paddingBottom = "62px"
+            super(props, context)
         }
 
         render () {
-            return React.createElement(Term, Object.assign({}, this.props, {
-                onTerminal: this._onTerminal
+            return React.createElement(Hyper, Object.assign({}, this.props, {
+                padding: '20px',
+                customChildren: [
+                    React.createElement('div', {key: 'wuhhaazz'}, 'wazzaaa'),
+                ]
             }));
         }
     }
