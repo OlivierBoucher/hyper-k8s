@@ -8,13 +8,13 @@ const watch = require('gulp-watch');
 
 
 gulp.task('watch', () => {
-	watch('index.jsx')
+	watch('**/*.jsx')
 		.pipe(babel())
 		.pipe(gulp.dest(__dirname))
 });
 
 gulp.task('default', () => {
-	gulp.src('index.jsx')
+	gulp.src('**/*.jsx')
 	.pipe(babel())
 	.pipe(gulp.dest(__dirname))
 });
