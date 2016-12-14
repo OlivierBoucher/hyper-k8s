@@ -6,7 +6,7 @@ exports.onApp = (app) => {
     console.log(app)
 };
 
-exports.decorateTerm = (Hyper, {React, notify}) => {
+exports.decorateTerm = (Term, {React, notify}) => {
     const BottomBar = require('./src/components/BottomBar')(React);
 
     return class extends React.Component {
@@ -15,8 +15,8 @@ exports.decorateTerm = (Hyper, {React, notify}) => {
         }
 
         render () {
-            return React.createElement(Hyper, Object.assign({}, this.props, {
-                padding: '20px',
+            return React.createElement(Term, Object.assign({}, this.props, {
+                padding: '12px 14px 32px 14px',
                 customChildren: [
                     <BottomBar key="wazz"/>
                 ]

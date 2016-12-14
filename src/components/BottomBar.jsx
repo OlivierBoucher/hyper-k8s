@@ -5,7 +5,12 @@ module.exports = (React) => {
 		}
 
 		render() {
-			return <div>Wazzaa</div>
+			return <div style={{
+				height: 33,
+				paddingLeft: 10,
+				paddingRight: 10,
+				marginLeft: -15,
+				marginRight: -15}}>Wazzaa</div>
 		}
 	}
 };
