@@ -15,5 +15,9 @@
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
     "gulp-watch": "^4.3.11"
+  },
+  "dependencies": {
+    "js-yaml": "^3.9.1",
+    "node-watch": "^0.5.5"
   }
 }
