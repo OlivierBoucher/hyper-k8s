@@ -1,18 +1,39 @@
-/**
- * Created by olivier on 2016-12-13.
- */
+const {homedir} = require('os');
+const path = require('path');
 const fs = require('fs');
 const watch = require('node-watch');
 const yaml = require('js-yaml');
 
-const ActionK8sContextChanged = "K8S_CONTEXT_CHANGED"
+// RPC methods
+const KubeConfigFileUpdate = "KUBE_CONFIG_FILE_UPDATE"
+const KubeConfigFileMissing = "KUBE_CONFIG_FILE_MISSING"
 
-exports.onApp = (app) => {
-    console.log(app)
-};
+// Redux actions
+const ActionK8sContextChanged = "K8S_CONTEXT_CHANGED"
+const ActionK8sContextNotFound = "K8S_CONTEXT_NOT_FOUND"
 
 exports.onWindow = (BrowserWindow) => {
-    const kubeConfigPath = '/Users/olivier/.kube/config'
+    const getKubeConfigPath = () => {
+        let kubeConfigPath = process.env['KUBECONFIG'];
+        if(kubeConfigPath && fs.existsSync(kubeConfigPath)) {
+            return kubeConfigPath;
+        }
+
+        kubeConfigPath = path.join(homedir(), '.kube', 'config');
+        if(kubeConfigPath && fs.existsSync(kubeConfigPath)) {
+            return kubeConfigPath;
+        }
+
+        return '';
+    }
+
+    const kubeConfigPath = getKubeConfigPath();
+    if(!kubeConfigPath) {
+        setTimeout(() => {
+            BrowserWindow.rpc.emit(KubeConfigFileMissing, {})
+        }, 2000)
+        return;
+    }
 
     const getKubeConfig = () => yaml.safeLoad(fs.readFileSync(kubeConfigPath, 'utf8'));
     const emitConfig = () => {
@@ -20,7 +41,7 @@ exports.onWindow = (BrowserWindow) => {
         const context = config.contexts.find(x => x.name === config['current-context']).context
         const clusterSplit = context.cluster.split('_');
 
-        BrowserWindow.rpc.emit("KUBE_STATE_CHANGE", {
+        BrowserWindow.rpc.emit(KubeConfigFileUpdate, {
             namespace: context.namespace || 'default',
             cluster: clusterSplit[clusterSplit.length -1],
         })
@@ -41,11 +62,17 @@ exports.decorateTerm = (Term, { React, notify }) => {
         constructor(props, context) {
             super(props, context)
 
-            window.rpc.on('KUBE_STATE_CHANGE', (kubeState) => {
+            window.rpc.on(KubeConfigFileUpdate, (kubeState) => {
                 window.store.dispatch({
                     type: ActionK8sContextChanged,
                     value: kubeState,
                 });
+            });
+
+            window.rpc.on(KubeConfigFileMissing, () => {
+                window.store.dispatch({
+                    type: ActionK8sContextNotFound,
+                })
             });
         }
 
@@ -53,7 +80,7 @@ exports.decorateTerm = (Term, { React, notify }) => {
             return React.createElement(Term, Object.assign({}, this.props, {
                 padding: '12px 14px 32px 14px',
                 customChildren: [
-                    <BottomBar key="bottomBar" kubeState={this.props.kubeState} />
+                    <BottomBar key="bottomBar" kubeMissingContext={this.props.kubeMissingContext} kubeState={this.props.kubeState} />
                 ]
             }));
         }
@@ -63,7 +90,12 @@ exports.decorateTerm = (Term, { React, notify }) => {
 exports.reduceUI = (state, action) => {
     switch (action.type) {
         case ActionK8sContextChanged:
-            return state.set('kubeState', action.value);
+            state.set('kubeState', action.value);
+            state.set('kubeMissingContext', false);
+            break;
+        case ActionK8sContextNotFound:
+            state.set('kubeMissingContext', true);
+            break;
     }
     return state;
 }
@@ -71,12 +103,14 @@ exports.reduceUI = (state, action) => {
 exports.mapTermsState = (state, map) => {
     return Object.assign(map, {
         kubeState: state.ui.kubeState,
+        kubeMissingContext: state.ui.kubeMissingContext,
     })
 }
 
 const passProps = (uid, parentProps, props) => {
     return Object.assign(props, {
         kubeState: parentProps.kubeState,
+        kubeMissingContext : parentProps.kubeMissingContext,
     })
 }
 
