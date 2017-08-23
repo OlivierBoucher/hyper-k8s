@@ -4,24 +4,25 @@ module.exports = (React) => {
 	return class BottomBar extends React.Component {
 		constructor(props) {
 			super(props)
-
-			window.rpc.on('KUBE_STATE_CHANGE', (state) => {
-				console.log(state);
-			});
 		}
 
 		render() {
-			const Status = ({ kubeState }) => {
+			const Status = ({ kubeState, kubeMissingContext }) => {
+				const containerStyle = { marginLeft: 5 };
+
 				if (kubeState) {
-					return <div style={{ marginLeft: 5 }}>
+					return <div style={containerStyle}>
 						<span>{kubeState.cluster}</span>
 						<span style={{ marginLeft: 5, marginRight: 5 }}>{'\u2192'}</span>
 						<span>{kubeState.namespace}</span>
 					</div>
+				} else if (kubeMissingContext) {
+					return <span style={containerStyle}>Error: missing kube config please refer to the README</span>
 				} else {
-					return <span style={{ marginLeft: 5 }}>Loading...</span>
+					return <span style={containerStyle}>Loading...</span>
 				}
 			}
+
 			return <div style={{
 				fontSize: '12px',
 				height: 35,
@@ -35,7 +36,7 @@ module.exports = (React) => {
 				alignItems: 'center'
 			}}>
 				<KubernetesLogo></KubernetesLogo>
-				<Status kubeState={this.props.kubeState}></Status>
+				<Status kubeState={this.props.kubeState} kubeMissingContext={this.props.kubeMissingContext}></Status>
 			</div>
 		}
 	}
